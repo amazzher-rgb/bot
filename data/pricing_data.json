@@ -1,0 +1,72 @@
+[
+  {
+    "id": "price-english",
+    "courseId": "course-english",
+    "courseTitle": "دورة احتراف اللغة الإنجليزية للمحادثة وسوق العمل",
+    "originalPrice": 1200,
+    "currentPrice": 599,
+    "currency": "ريال سعودي",
+    "discountPercentage": 50,
+    "isOfferActive": true,
+    "offerExpiresAt": "نهاية الأسبوع الحالي (مقاعد محدودة)",
+    "promoCode": "THAKERLI50",
+    "promoDiscountExtra": 10,
+    "notes": "يشمل حصة تجريبية مجانية وماتريال معتمدة من المركز الثقافي. سداد مباشر أو تطبيق برق وتاب تاب."
+  },
+  {
+    "id": "price-german",
+    "courseId": "course-german",
+    "courseTitle": "دورة اللغة الألمانية من الصفر حتى الإتقان (A1 - B2)",
+    "originalPrice": 1400,
+    "currentPrice": 699,
+    "currency": "ريال سعودي",
+    "discountPercentage": 50,
+    "isOfferActive": true,
+    "offerExpiresAt": "لفترة محدودة",
+    "promoCode": "DEUTSCH10",
+    "promoDiscountExtra": 10,
+    "notes": "مجموعات صغيرة تفاعلية، حصة تجريبية مجانية، شهادة معتمدة."
+  },
+  {
+    "id": "price-french",
+    "courseId": "course-french",
+    "courseTitle": "دورة اللغة الفرنسية التفاعلية",
+    "originalPrice": 1300,
+    "currentPrice": 649,
+    "currency": "ريال سعودي",
+    "discountPercentage": 50,
+    "isOfferActive": true,
+    "offerExpiresAt": "لفترة محدودة",
+    "promoCode": "FRANCAIS10",
+    "promoDiscountExtra": 10,
+    "notes": "محادثات لايف وتطبيقات مستمرة مع مدربين خبراء."
+  },
+  {
+    "id": "price-freelance",
+    "courseId": "course-freelance",
+    "courseTitle": "معسكر العمل الحر والربح من الإنترنت",
+    "originalPrice": 1100,
+    "currentPrice": 549,
+    "currency": "ريال سعودي",
+    "discountPercentage": 50,
+    "isOfferActive": true,
+    "offerExpiresAt": "نهاية الشهر",
+    "promoCode": "FREELANCE15",
+    "promoDiscountExtra": 15,
+    "notes": "يشمل بناء البورتفوليو والتطبيق على مشاريع ومنصات حقيقية."
+  },
+  {
+    "id": "price-communication",
+    "courseId": "course-communication",
+    "courseTitle": "برنامج مهارات التواصل الفعّال والقيادة الشخصية",
+    "originalPrice": 950,
+    "currentPrice": 475,
+    "currency": "ريال سعودي",
+    "discountPercentage": 50,
+    "isOfferActive": true,
+    "offerExpiresAt": "لفترة محدودة",
+    "promoCode": "LEAD10",
+    "promoDiscountExtra": 10,
+    "notes": "تطوير كاريزما الإلقاء والإقناع والتفاوض."
+  }
+]

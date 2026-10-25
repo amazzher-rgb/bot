@@ -1,0 +1,10 @@
+{
+  "name": "بوت واتساب الأكاديمية الذكي وشيت المتابعة | WhatsApp Business Companion & Leads Bot",
+  "description": "شات بوت واتساب بيزنس للأكاديميات التدريبية يربط كجهاز مصاحب عبر QR code، ويرد بلهجة خليجية على الرسائل والملاحظات الصوتية مع إدارة ديناميكية للأسعار ومزامنة شيت الإكسيل فورياً.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
