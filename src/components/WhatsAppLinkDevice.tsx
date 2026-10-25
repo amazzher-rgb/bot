@@ -470,41 +470,73 @@ export const WhatsAppLinkDevice: React.FC<WhatsAppLinkDeviceProps> = ({
             {/* Live Server URL Integration Settings */}
             <div className="pt-2 border-t border-slate-700/60 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs sm:text-sm font-bold text-slate-300 flex items-center gap-2">
-                  <Server className="w-4 h-4 text-blue-400" />
-                  <span>إعدادات ربط سيرفر واتساب الحقيقي (Node.js Live Server)</span>
-                </h4>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 rounded-full ${isBackendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-400'}`} />
+                  <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                    <Server className="w-4 h-4 text-blue-400" />
+                    <span>سيرفر واتساب Node.js (لتشغيل الـ QR الرسمي بالهاتف)</span>
+                  </h4>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowServerConfig(!showServerConfig)}
                   className="text-xs text-blue-400 hover:text-blue-300 underline cursor-pointer"
                 >
-                  {showServerConfig ? 'إغلاق الإعدادات' : 'تخصيص رابط السيرفر'}
+                  {showServerConfig ? 'إخفاء الإعدادات' : 'إظهار إعدادات السيرفر'}
                 </button>
               </div>
 
               {showServerConfig && (
-                <form onSubmit={handleSaveServer} className="p-4 rounded-2xl bg-slate-900/80 border border-blue-500/30 space-y-3 text-xs">
-                  <p className="text-slate-300 leading-relaxed">
-                    إذا قمت بنشر كود السيرفر (<code className="text-blue-300 font-mono">server.ts</code>) على خادم سحابي (مثل Cloud Run أو Render أو VPS)، ضع رابط السيرفر هنا لجلب رمز الـ QR الحقيقي وربط هاتفك الفعلي 24/7:
+                <form onSubmit={handleSaveServer} className="p-4 rounded-2xl bg-slate-900/90 border border-blue-500/40 space-y-3 text-xs shadow-lg">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>حالة الاتصال بالسيرفر:</span>
+                    {isBackendConnected ? (
+                      <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        🟢 متصل بسيرفر Node.js بنجاح
+                      </span>
+                    ) : (
+                      <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        🔴 غير متصل بسيرفر خارجي بعد
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-slate-300 leading-relaxed text-[11px]">
+                    ضع رابط سيرفر الـ Node.js المرفق (سواء رفعته على Render أو Railway أو شغلته على جهازك بـ <code className="text-blue-300 font-mono">npm start</code>) لتوليد رمز الـ QR الحقيقي وربط هاتفك:
                   </p>
+
                   <div className="space-y-2">
                     <input
                       type="url"
                       value={serverUrlInput}
                       onChange={(e) => setServerUrlInput(e.target.value)}
-                      placeholder="https://your-bot-backend.example.com"
+                      placeholder="مثال: https://zakirly-whatsapp-bot.onrender.com أو http://localhost:3000"
                       dir="ltr"
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-400 font-mono"
                     />
-                    <div className="flex items-center gap-2">
+
+                    {/* Quick Presets */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-slate-400">روابط سريعة:</span>
+                      <button
+                        type="button"
+                        onClick={() => setServerUrlInput('http://localhost:3000')}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-300 text-[10px] border border-slate-700 font-mono transition cursor-pointer"
+                      >
+                        http://localhost:3000
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
                       <button
                         type="submit"
                         disabled={isTestingServer}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer disabled:opacity-50"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                       >
-                        {isTestingServer ? 'جاري الفحص...' : 'فحص وحفظ الرابط'}
+                        <Server className="w-3.5 h-3.5" />
+                        <span>{isTestingServer ? 'جاري الفحص والاتصال...' : 'فحص والاتصال بالسيرفر'}</span>
                       </button>
+
                       {serverUrlInput && (
                         <button
                           type="button"
@@ -514,7 +546,7 @@ export const WhatsAppLinkDevice: React.FC<WhatsAppLinkDeviceProps> = ({
                           }}
                           className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs rounded-xl transition cursor-pointer"
                         >
-                          إعادة ضبط
+                          إلغاء السيرفر
                         </button>
                       )}
                     </div>
