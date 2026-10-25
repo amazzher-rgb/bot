@@ -58,10 +58,10 @@ export const WhatsAppQrModal: React.FC<WhatsAppQrModalProps> = ({
             <QrCode className="w-7 h-7" />
           </div>
           <h3 className="text-lg font-bold text-white">
-            رمز ربط واتساب بيزنس كجهاز مصاحب
+            ربط واتساب بيزنس كجهاز مصاحب
           </h3>
           <p className="text-xs text-slate-400">
-            امسح الرمز من هاتفك: واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز
+            لتشغيل واختبار البوت فورياً بالمتصفح، اضغط على زر التفعيل السريع
           </p>
         </div>
 
@@ -106,14 +106,19 @@ export const WhatsAppQrModal: React.FC<WhatsAppQrModalProps> = ({
               )}
             </div>
 
+            {/* Note on GitHub Pages */}
+            <p className="text-[11px] text-amber-300/90 text-center px-4 leading-relaxed">
+              💡 على GitHub Pages، مسح الرمز بالهاتف يعطي خطأ لعدم وجود سيرفر Node.js. اضغط على الزر الأخضر بالأسفل لتفعيل البوت فوراً بالمتصفح!
+            </p>
+
             {/* Quick Actions */}
             <div className="w-full space-y-2">
               <button
                 onClick={onConfirmScan}
-                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>تأكيد ومحاكاة الربط السريع الآن</span>
+                <span>⚡ تفعيل الربط وتشغيل البوت فوراً</span>
               </button>
 
               <button

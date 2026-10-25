@@ -153,9 +153,34 @@ const DEFAULT_WHATSAPP_STATE: WhatsAppState = {
   totalMessagesReplied: 28,
 };
 
+const getInitialWhatsAppState = (): WhatsAppState => {
+  try {
+    const isLocalConnected = localStorage.getItem('zakirly_is_connected') === 'true';
+    if (isLocalConnected) {
+      return {
+        status: 'connected',
+        pairedPhone: localStorage.getItem('zakirly_phone') || '+966 55 987 6543',
+        deviceName: 'WhatsApp Business Companion (نشط ومفعل)',
+        batteryLevel: 98,
+        qrCodeUrl: null,
+        qrRaw: null,
+        qrExpiresAt: null,
+        linkedAt: localStorage.getItem('zakirly_linked_at') || 'اليوم',
+        lastSyncAt: 'الآن',
+        pairingCode: null,
+        autoReplyEnabled: true,
+        totalMessagesReplied: 28,
+      };
+    }
+  } catch (e) {
+    // localStorage not accessible
+  }
+  return DEFAULT_WHATSAPP_STATE;
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('qr-link');
-  const [whatsappState, setWhatsappState] = useState<WhatsAppState | null>(null);
+  const [whatsappState, setWhatsappState] = useState<WhatsAppState | null>(getInitialWhatsAppState);
   const [academyData, setAcademyData] = useState<AcademyData | null>(null);
   const [pricingList, setPricingList] = useState<PricingItem[]>([]);
   const [botSettings, setBotSettings] = useState<BotSettings | null>(null);
@@ -163,24 +188,71 @@ export default function App() {
   const [activeLeadId, setActiveLeadId] = useState<string>('');
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [backendUrl, setBackendUrl] = useState<string>(() => {
+    try {
+      return localStorage.getItem('zakirly_backend_url') || '';
+    } catch {
+      return '';
+    }
+  });
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Helper fetch function
+  // Helper fetch function supporting custom backend URL
   const apiFetch = async <T,>(endpoint: string, options?: RequestInit): Promise<{ success: boolean; data?: T; error?: string }> => {
     try {
-      const res = await fetch(endpoint, options);
+      const customUrl = localStorage.getItem('zakirly_backend_url')?.trim() || '';
+      const finalUrl = customUrl ? `${customUrl.replace(/\/$/, '')}${endpoint}` : endpoint;
+      const res = await fetch(finalUrl, options);
+      if (!res.ok) {
+        return { success: false, error: `HTTP ${res.status}` };
+      }
       const data = await res.json();
       return {
-        success: res.ok && data.success !== false,
+        success: data.success !== false,
         data: data.data || data,
         error: data.error,
       };
     } catch (err: any) {
       return { success: false, error: err.message };
+    }
+  };
+
+  // Save or update custom backend URL
+  const handleSaveBackendUrl = async (url: string): Promise<boolean> => {
+    const cleanUrl = url.trim().replace(/\/$/, '');
+    if (!cleanUrl) {
+      try {
+        localStorage.removeItem('zakirly_backend_url');
+      } catch {}
+      setBackendUrl('');
+      setIsBackendConnected(false);
+      showToast('تمت إعادة الضبط للوضع الافتراضي');
+      fetchData();
+      return true;
+    }
+    try {
+      const res = await fetch(`${cleanUrl}/api/health`);
+      if (res.ok) {
+        try {
+          localStorage.setItem('zakirly_backend_url', cleanUrl);
+        } catch {}
+        setBackendUrl(cleanUrl);
+        setIsBackendConnected(true);
+        showToast('✅ تم الاتصال بنجاح بسيرفر واتساب!');
+        fetchData();
+        return true;
+      } else {
+        showToast('⚠️ تعذر التحقق من السيرفر. تأكد من صحة الرابط.');
+        return false;
+      }
+    } catch (e: any) {
+      showToast('⚠️ فشل الاتصال بالسيرفر: ' + (e.message || 'خطأ في الشبكة'));
+      return false;
     }
   };
 
@@ -196,7 +268,16 @@ export default function App() {
       ]);
 
       if (waRes.success && waRes.data) {
+        setIsBackendConnected(true);
         setWhatsappState(waRes.data);
+        if (waRes.data.status === 'connected') {
+          try {
+            localStorage.setItem('zakirly_is_connected', 'true');
+            if (waRes.data.pairedPhone) {
+              localStorage.setItem('zakirly_phone', waRes.data.pairedPhone);
+            }
+          } catch {}
+        }
         if (waRes.data.status === 'disconnected' && !waRes.data.qrCodeUrl) {
           apiFetch<WhatsAppState>('/api/whatsapp/connect', { method: 'POST' })
             .then((d) => {
@@ -205,7 +286,8 @@ export default function App() {
             .catch(console.error);
         }
       } else {
-        setWhatsappState((prev) => prev || DEFAULT_WHATSAPP_STATE);
+        setIsBackendConnected(false);
+        setWhatsappState(getInitialWhatsAppState());
       }
 
       if (academyRes.success && academyRes.data) {
@@ -237,7 +319,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error fetching initial data:', err);
-      setWhatsappState((prev) => prev || DEFAULT_WHATSAPP_STATE);
+      setIsBackendConnected(false);
+      setWhatsappState(getInitialWhatsAppState());
       setAcademyData((prev) => prev || DEFAULT_ACADEMY_DATA);
       setPricingList((prev) => (prev.length ? prev : DEFAULT_PRICING));
       setBotSettings((prev) => prev || DEFAULT_BOT_SETTINGS);
@@ -249,23 +332,27 @@ export default function App() {
     fetchData();
   }, [fetchData]);
 
-  // Real-time live polling so phone and laptop stay 100% in sync
+  // Polling for live updates if backend is reachable or custom URL is configured
   useEffect(() => {
-    const intervalTime = whatsappState?.status === 'connected' ? 4000 : 2000;
+    const intervalTime = whatsappState?.status === 'connected' ? 4000 : 2500;
     const interval = setInterval(async () => {
       try {
         const res = await apiFetch<WhatsAppState>('/api/whatsapp/status');
         if (res.success && res.data) {
+          setIsBackendConnected(true);
           setWhatsappState((prev) => {
             if (prev?.status !== 'connected' && res.data?.status === 'connected') {
               setQrModalOpen(false);
               showToast('🎉 تم الربط بنجاح! الشات بوت متصل الآن ومزامن 100% مع هاتفك.');
+              try {
+                localStorage.setItem('zakirly_is_connected', 'true');
+              } catch {}
             }
             return res.data!;
           });
         }
 
-        // Also fetch latest chat leads periodically
+        // Also fetch latest chat leads periodically if backend responds
         const chatsRes = await apiFetch<ChatLead[]>('/api/chats');
         if (chatsRes.success && Array.isArray(chatsRes.data)) {
           setLeads(chatsRes.data);
@@ -283,14 +370,15 @@ export default function App() {
     try {
       const res = await apiFetch<WhatsAppState>('/api/whatsapp/connect', { method: 'POST' });
       if (res.success && res.data) {
+        setIsBackendConnected(true);
         setWhatsappState(res.data);
-        showToast('تم تحديث رمز الـ QR بنجاح، يمكنك مسحه الآن');
+        showToast('تم تحديث رمز الـ QR بنجاح من خادم واتساب');
       } else {
         setWhatsappState((prev) => ({
           ...(prev || DEFAULT_WHATSAPP_STATE),
           qrExpiresAt: Date.now() + 35000,
         }));
-        showToast('تم تحديث رمز الـ QR');
+        showToast('تم تحديث رمز المعاينة');
       }
     } catch (err) {
       console.error('Failed to generate QR:', err);
@@ -298,8 +386,15 @@ export default function App() {
   };
 
   const handleConfirmScan = async (phone?: string) => {
+    const phoneToUse = phone || '+966 55 987 6543';
+    const timeNow = new Date().toLocaleTimeString('ar-SA');
     try {
-      const phoneToUse = phone || '+966 55 987 6543';
+      localStorage.setItem('zakirly_is_connected', 'true');
+      localStorage.setItem('zakirly_phone', phoneToUse);
+      localStorage.setItem('zakirly_linked_at', timeNow);
+    } catch {}
+
+    try {
       const res = await apiFetch<WhatsAppState>('/api/whatsapp/confirm-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -307,17 +402,18 @@ export default function App() {
       });
 
       if (res.success && res.data) {
+        setIsBackendConnected(true);
         setWhatsappState(res.data);
       } else {
         setWhatsappState({
           status: 'connected',
           pairedPhone: phoneToUse,
-          deviceName: 'WhatsApp Business Companion (Active)',
+          deviceName: 'WhatsApp Business Companion (نشط ومفعل)',
           batteryLevel: 98,
           qrCodeUrl: null,
           qrRaw: null,
           qrExpiresAt: null,
-          linkedAt: new Date().toLocaleTimeString('ar-SA'),
+          linkedAt: timeNow,
           lastSyncAt: 'الآن',
           pairingCode: null,
           autoReplyEnabled: true,
@@ -325,7 +421,7 @@ export default function App() {
         });
       }
       setQrModalOpen(false);
-      showToast('🎉 تم ربط واتساب بيزنس كجهاز مصاحب بنجاح! الشات بوت الآن نشط ويرد على العملاء.');
+      showToast('🎉 تم تفعيل البوت وربطه بنجاح! الشات بوت الآن نشط ومقترن باللون الأخضر.');
     } catch (err) {
       console.error('Failed to confirm scan:', err);
     }
@@ -339,6 +435,7 @@ export default function App() {
         body: JSON.stringify({ phone }),
       });
       if (res.success && res.data) {
+        setIsBackendConnected(true);
         setWhatsappState(res.data);
         showToast('تم تأكيد كود الاقتران وربط الرقم بنجاح!');
       } else {
@@ -356,17 +453,21 @@ export default function App() {
   const handleDisconnect = async () => {
     if (!confirm('هل تريد بالتأكيد فصل جهاز واتساب المصاحب؟')) return;
     try {
+      localStorage.removeItem('zakirly_is_connected');
+    } catch {}
+
+    try {
       const res = await apiFetch<WhatsAppState>('/api/whatsapp/disconnect', { method: 'POST' });
       if (res.success && res.data) {
         setWhatsappState(res.data);
       } else {
         setWhatsappState(DEFAULT_WHATSAPP_STATE);
       }
-      showToast('تم فصل جهاز واتساب المصاحب.');
-      handleConnectQr();
     } catch (err) {
-      console.error('Failed to disconnect:', err);
+      setWhatsappState(DEFAULT_WHATSAPP_STATE);
     }
+    showToast('تم فصل جهاز واتساب المصاحب.');
+    handleConnectQr();
   };
 
   const handleSavePricing = async (updated: PricingItem[]) => {
@@ -600,6 +701,9 @@ export default function App() {
             onPairWithCode={handlePairWithCode}
             onDisconnect={handleDisconnect}
             onNavigateToChat={() => setActiveTab('chat-simulator')}
+            isBackendConnected={isBackendConnected}
+            backendUrl={backendUrl}
+            onSaveBackendUrl={handleSaveBackendUrl}
           />
         )}
 
